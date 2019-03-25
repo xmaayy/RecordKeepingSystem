@@ -3,6 +3,9 @@
 
 #include "record.h"
 
+
+#define DATA 0
+#define CMD 1
 // Message containing a record, to transfer data between processes.
 typedef struct record_message {
     long message_type;
