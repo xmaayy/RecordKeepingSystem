@@ -14,8 +14,10 @@
 
 // Array to store pointers to employee records in.
 Record** records = NULL;
-int record_index = 0;
-int records_max;
+// Index of the last element.
+int last_record = 0;
+// Capacity of the array.
+int records_length;
 // Message queue identifiers, obtained from msgget() calls.
 int keeper_queue, admin_queue;
 
@@ -33,7 +35,7 @@ void allocate_memory(int size) {
         perror("Memory allocation failed.");
         exit(EXIT_FAILURE);
     }
-    records_max = DEFAULTSIZE;
+    records_length = DEFAULTSIZE;
 }
 
 int array_length(Record* r) {
@@ -52,16 +54,25 @@ Record* create_record(char* name, char* dept, int id, int salary) {
 }
 
 // Place a new record into the database.
-int insert_record(Record* r) {
-    if (record_index <= records_max) {
-        records[record_index] = r;
-        record_index++;
+int insert_item(Record* r) {
+    if (last_record <= records_length) {
+        records[last_record] = r;
+        last_record++;
         return 1;
     } else {
-        // TODO: Have the array dynamically resize on demand.
         perror("Could not insert new record; array is full.");
         return -1;
     }
+}
+
+// Remove a record at the specified index from the database.
+int remove_item(int index) {
+    // Since we keep track of the index of the last record in the array,
+    // and the order of elements really doesn't matter, we can just put the last
+    // record into the hole left by removing this one.
+    records[index] = records[last_record];
+    records[last_record] = NULL;
+    last_record--;
 }
 
 // Look for a message in the queue that contains a record. If there is one,
@@ -73,18 +84,59 @@ int add_record() {
     // This is super inefficient and redundant but meh.
     // We need to get this data copied somewhere permanent, this is a simple
     // dumb solution.
-    insert_record(create_record(data.name, data.deptName, data.employeeNum, 
+    insert_item(create_record(data.name, data.deptName, data.employeeNum, 
                                 data.salary));
 }
 
 // Fetch a record by its employee ID.
 Record* fetch_by_ID(int ID) {
-    for(int i=0; i<records_max; i++) {
+    for(int i=0; i<records_length; i++) {
         if (records[i]->employeeNum == ID) {
             return records[i];
         }
     }
     return NULL;
+}
+
+// Fetch a record by the employee's name.
+// The name must be an exact match.
+Record* fetch_by_name(char* name) {
+    for(int i=0; i<records_length; i++) {
+        if (records[i]->name == name) {
+            return records[i];
+        }
+    }
+    return NULL;
+}
+
+// Fetch all records containing employees in a given department.
+// The department name must be an exact match.
+// Returns an array of Record*s
+Record** fetch_by_department(char* dept) {
+    //Record* matches[records_length];
+    // TODO: Need to clean up this array! MEMORY LEAK!
+    Record** matches = malloc(records_length*sizeof(Record*));
+    int matches_index = 0;
+    for(int i=0; i<records_length; i++) {
+        if (records[i]->deptName == dept) {
+            // Add this record to the list.
+            matches[matches_index] = records[i];
+            matches_index++;
+        }
+    }
+    return matches;
+}
+
+// Delete a record with a given employee number from the database.
+int delete_record(int ID) {
+    for(int i=0; i<records_length; i++) {
+        if (records[i]->employeeNum == ID) {
+            // DELETE
+        }
+    }
+    // TODO: should have this send an error message to the client.
+    printf("No record with employee ID %d found", ID);
+    return -1;
 }
 
 // Create a message queue for messages going from the record keeper -> the
@@ -117,9 +169,9 @@ int main() {
     admin_queue = create_admin_queue();
 
 
-    for (int i=0; i<=records_max; i++) {
+    for (int i=0; i<=records_length; i++) {
         Record* foo = create_record("John", "Accting", i, 20000);
-        insert_record(foo);
+        insert_item(foo);
         print_record(records[i]);
     }
 }
