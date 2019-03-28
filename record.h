@@ -16,3 +16,13 @@ void print_record(Record* r) {
             "Salary ($):\t%d\n",
             r->name, r->deptName, r->employeeNum, r->salary);
 }
+
+// Create a new record and return a pointer to it.
+Record* create_record(char* name, char* dept, int id, int salary) {
+    Record* r = malloc((size_t) sizeof(Record*));
+    strcpy(r->name, name);
+    strcpy(r->deptName, dept);
+    r->employeeNum = id;
+    r->salary = salary;
+    return r;
+}

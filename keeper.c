@@ -42,17 +42,6 @@ int array_length(Record* r) {
     return (int) sizeof(r)/sizeof(Record);
 }
 
-
-// Create a new record and return a pointer to it.
-Record* create_record(char* name, char* dept, int id, int salary) {
-    Record* r = malloc((size_t) sizeof(Record*));
-    strcpy(r->name, name);
-    strcpy(r->deptName, dept);
-    r->employeeNum = id;
-    r->salary = salary;
-    return r;
-}
-
 // Place a new record into the database.
 int insert_item(Record* r) {
     if (last_record <= records_length) {
@@ -147,6 +136,7 @@ int create_keeper_queue() {
         perror("Message queue creation failed.");
         exit(EXIT_FAILURE);
     }
+    printf("Server queue created with ID %d\n", id);
     return id;
 }
 
@@ -158,6 +148,7 @@ int create_admin_queue() {
             perror("Message queue creation failed.");
             exit(EXIT_FAILURE);
         }
+        printf("Admin queue created with ID %d\n", id);
         return id;
 }
 
@@ -167,12 +158,16 @@ int main() {
     // Create the message queues.
     keeper_queue = create_keeper_queue();
     admin_queue = create_admin_queue();
-
-
-    for (int i=0; i<=records_length; i++) {
-        Record* foo = create_record("John", "Accting", i, 20000);
-        insert_item(foo);
-        print_record(records[i]);
-    }
+    //while(1) {
+        puts("Waiting for message...");
+        record_message msg;
+        int status = msgrcv(admin_queue, (void*)&msg, sizeof(Record), DATA, 0);
+        if (status > 0) {
+            puts("Recieved message: ");
+            print_record(&msg.record);
+        } else {
+            puts("Failed");
+        }
+    //}
 }
 
