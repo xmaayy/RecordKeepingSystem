@@ -1,11 +1,12 @@
-#define KEEPERQUEUE 4444
-#define ADMINQUEUE 5555
+#define KEEPERQUEUE 4445
+#define ADMINQUEUE 5556
 
 #include "record.h"
 
+#define LEN  11 // Inform client of return data len
+#define DATA 22 // Transfer of a single record
+#define CMD  33 // Client command to server
 
-#define DATA 0
-#define CMD 1
 // Message containing a record, to transfer data between processes.
 typedef struct record_message {
     long message_type;
