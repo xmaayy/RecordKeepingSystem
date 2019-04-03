@@ -1,3 +1,6 @@
+Joshua Fryer	101032335
+Xander May	101038396
+
 RUNNING THE PROGRAM:
 
 Any text in quotation marks indicates a command to enter into the terminal.
