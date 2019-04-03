@@ -1,5 +1,6 @@
 // Interactive client.
 
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/msg.h>
@@ -11,11 +12,24 @@
 
 int keeper_queue, admin_queue;
 
+
+/**
+ * A simple helper function to remove trailing newlines from text
+ */
 void remove_trailing_newline(char* str) {
     int n_index = strcspn(str, "\n");
     str[n_index] = '\0';
 }
 
+
+/**Function prompt_for_record
+ * This function takes in the command type (1-7) and prompts the user
+ * for the required data for that type.
+ *
+ * The function returns a record with the collected data, with fields
+ * not in use for that specific command left unset (meaning data can
+ * be anything)
+ */
 Record prompt_for_record(int cmd) {
     // These can all be left undefined for any command
     // in which they are not read because... well... we
@@ -58,6 +72,13 @@ Record prompt_for_record(int cmd) {
     return create_record(name, dept, id, salary);
 }
 
+/** Function send_cmd
+ * This function sends a single CMD/DATA message pair to the server. This
+ * is necessary any time you want to communicate with the server because it
+ * will always be listening for this pair.
+ *
+ * These messages are sent on the admin->server message queue
+ */
 void send_cmd(int command, Record r) {
     cmd_message cmd;
     cmd.message_type = CMD;
@@ -67,6 +88,9 @@ void send_cmd(int command, Record r) {
     msg.message_type = DATA;
     msg.record = r;
 
+    // The order that these are sent in does not matter because the server
+    // listens for specific message types, rather than taking messages
+    // in the order they're sent.
     puts("Pushing Command to Queue");
     int status = msgsnd(admin_queue, (void*)&cmd, sizeof(cmd.command), 0);
     if (status < 0) {
@@ -108,12 +132,17 @@ int get_keeper_queue() {
     return id;
 }
 
-
+/** Function get_data
+ * Recieves a LEN type message from the queue and pulls in N record type
+ * messages, where N is set by the previous LEN message. The function
+ * returns a temporary message store that must later be freed by the
+ * calling function.
+ */
 RecordStore* get_data(){
     cmd_message len;
     int status = msgrcv(keeper_queue, (void*)&len, sizeof(len.command), LEN, 0);
     if (status > 0) {
-        printf("There (are|is) %d matching record(s)\n", len.command);
+        printf("Server found %d matching record(s)\n", len.command);
     } else {
         printf("Errored out\n");
         exit(EXIT_FAILURE);
@@ -142,14 +171,14 @@ RecordStore* get_data(){
 int main() {
     keeper_queue = get_keeper_queue();
     admin_queue = get_admin_queue();
-
+    
     char cmdStr[3];
     int cmd;
     Record r;
     RecordStore* ret_data;
 
     while(1){
-        printf("-------------------------------------\n");
+        printf("------------------------------------------\n");
         printf("Insert | 1\nCheck Name | 2\n");
         printf("Check Department | 3\nCheck Salary | 4\n");
         printf("Check Emp Num | 5\nCheck | 6\n");
@@ -165,13 +194,20 @@ int main() {
                 r = prompt_for_record(cmd);
                 send_cmd(cmd,r);
                 break;
+            case 2:// Check_name
+                printf("\nCommand %d | Check_name\n", cmd);
+                break;
+            case 3:// Check_Department
+                printf("\nCommand %d | Check_department\n", cmd);
+                break;
+            case 4:// Check_Salary
+                printf("\nCommand %d | Check_salary\n", cmd);
+                break;
+            case 5:// Check_Employee_Name
+                printf("\nCommand %d | Check_Employee_Name\n", cmd);
+                break;
             case 6:// Check
                 printf("\nCommand %d | Check\n", cmd);
-                r = prompt_for_record(cmd);
-                send_cmd(cmd,r);
-                ret_data = get_data();
-                print_store(*ret_data);
-                free_store(ret_data);
                 break;
             case 7: // Delete
                 printf("\nCommand %d | Delete Record\n", cmd);
@@ -180,6 +216,13 @@ int main() {
                 break;
             default:
                 break;
+        }
+        if(cmd != 7 && cmd != 1){
+            r = prompt_for_record(cmd);
+            send_cmd(cmd,r);
+            ret_data = get_data();
+            print_element(*ret_data, cmd);
+            free_store(ret_data);
         }
     }
 

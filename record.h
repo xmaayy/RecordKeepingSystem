@@ -37,6 +37,7 @@ void print_record(Record* r);
 Record create_record(char* name, char* dept, int id, int salary);
 
 void print_store(RecordStore recs);
+void print_element(RecordStore recs, int cmd);
 
 int add_record(RecordStore* emp_rec, Record new_rec);
 

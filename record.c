@@ -22,6 +22,37 @@ Record create_record(char* name, char* dept, int id, int salary) {
     return r;
 }
 
+void print_element(RecordStore recs, int cmd){
+    ServerRecord* rec = recs.firstRec;
+    printf("\n------------------------------------------\n");
+    printf("Employee ");
+
+    switch (cmd){
+        case 2:
+            printf(" Name: ");
+            while(rec != NULL){printf(" %s ", rec->record.name);rec = rec->nextRec;};
+            break;
+        case 3:
+            printf(" Department: ");
+            while(rec != NULL){printf(" %s ", rec->record.deptName);rec = rec->nextRec;};
+            break;
+        case 4:
+            printf(" Salary: ");
+            while(rec != NULL){printf(" %d ", rec->record.salary);rec = rec->nextRec;};
+            break;
+        case 5:
+        case 6:
+            printf(" Number(s): ");
+            while(rec != NULL){printf(" %d ", rec->record.employeeNum);rec = rec->nextRec;};
+            break;
+        default:
+            break;
+    }
+
+    printf("\n------------------------------------------\n\n");
+    return;
+}
+
 void print_store(RecordStore recs){
     printf("Printing Employee Records\n");
     ServerRecord* rec = recs.firstRec;
@@ -30,7 +61,7 @@ void print_store(RecordStore recs){
         print_record(&(rec->record));
         rec = rec->nextRec;
     }
-    printf("------------------------------------------\n");
+    printf("------------------------------------------\n\n");
     return;
 }
 
