@@ -1,0 +1,62 @@
+---- SERVER ----
+   STARTUP
+   - Server starts up and registers the the two message queues that it and the
+   client use to communicate with one another
+   
+   LISTENING
+   - Server listens for messages of the CMD type on the `admin -> server` message
+   queue.
+
+   - Once it recieves a CMD type message it listens for a DATA type message, which
+   contains the piece of data required for that specific message type (IE full record
+   for an INSERT command, just the employee number for a name lookup)
+
+   - Upon recieving a message the server checks the command element of the message
+   structure and depending on the command issued by the admin will Insert/Search/Delete
+   in its employee records based on the record elements present in the DATA message
+
+   - If the command was INSERT or DELETE then the server goes back to LISTENING state,
+   otherwise it continues
+
+   - For all other commands the server searches through the records for elements matching
+   the data given in the DATA message (ie. Client gives server an employee number and asks
+   for the name of that employee, the server will try to match the given employee number
+   to one in its records). This can be a single match for commands 2-5, and multiple matches
+   for command 6 (check all in department)
+
+   - The server pushed all matching records into the `server -> client` message queue, and
+   then pushed a LEN type message indicating how many records were sent to the client.
+
+   - Server prints its new internal state (record store) and returns to LISTENING
+
+   EXIT
+   - When user presses CTRL-C the server closes the message queues and exits
+
+--- CLIENT ---
+
+   STARTUP
+   - The client registers itself to the two messages queues it uses to communicate with
+   the server
+
+   PROMPT
+   - The client will display a prompt to the user asking for a number (1-7) to be entered,
+   corresponding to the 7 different commands laid out in the assignment
+  
+   - Upon recieving the command the client will then prompt the user for the fields required
+   by that specific command (ie. Full record for 1|Insert, or just an employee number for 2|get name)
+
+   - The client will then push a CMD type message to the `admin -> server` message queue, as well as
+   a DATA type message containing the record with the appropriate fields filled.
+
+   - If the user issued an Insert or Delete command, the client goes back to PROMPT
+
+   - The client then listens on the `Server -> client` message queue for a LEN type message indicating how
+   many records the client will need to recieve from the server. In most cases this will be 1 or 0 (because
+   most commands will only match a single employee record), however check full department can return any
+   number of employee records
+
+   - Once the client knows how many records to pull in, it reads DATA type messages from the `server -> client`
+   message queue up to the limit specific in the LEN message and displays the resulting data to the user via
+   a print function.
+
+
