@@ -43,28 +43,28 @@ Record prompt_for_record(int cmd) {
 
     // Get name for commands 5 or 1
     if(cmd == 5 || cmd == 1){
-        puts("Enter a name: ");
+        puts("Enter an EMPLOYEE NAME: ");
         fgets(name, 12, stdin);
         remove_trailing_newline(name);
     }
 
     // Department matters for command 1 and 6
     if(cmd == 6 || cmd == 1){
-        puts("Enter a department");
+        puts("Enter a DEPARTMENT NAME: ");
         fgets(dept, 12, stdin);
         remove_trailing_newline(dept);
     }
 
     // ID matters for all cases except 5 and 6
     if(cmd != 5 && cmd != 6){
-        puts("Enter an ID");
+        puts("Enter an EMPLOYEE ID");
         fgets(idString, 12, stdin);
         id = strtol(idString, NULL, 10);
     }
 
     // Salary is only useful for command 1
         if(cmd == 1){
-        puts("Enter a salary");
+        puts("Enter a SALARY");
         fgets(salaryString, 12, stdin);
         salary = strtol(salaryString, NULL, 10);
     }
@@ -142,7 +142,8 @@ RecordStore* get_data(){
     cmd_message len;
     int status = msgrcv(keeper_queue, (void*)&len, sizeof(len.command), LEN, 0);
     if (status > 0) {
-        printf("Server found %d matching record(s)\n", len.command);
+        printf("\n\n-----------------------------------\n");
+        printf("Server found %d matching record(s):", len.command);
     } else {
         printf("Errored out\n");
         exit(EXIT_FAILURE);
@@ -169,6 +170,7 @@ RecordStore* get_data(){
 }
 
 int main() {
+    // Get pointers to the message queues.
     keeper_queue = get_keeper_queue();
     admin_queue = get_admin_queue();
     
@@ -177,16 +179,17 @@ int main() {
     Record r;
     RecordStore* ret_data;
 
+    // Prompt the user to enter a command.
     while(1){
         printf("------------------------------------------\n");
-        printf("Insert | 1\nCheck Name | 2\n");
-        printf("Check Department | 3\nCheck Salary | 4\n");
-        printf("Check Emp Num | 5\nCheck | 6\n");
-        printf("Delete | 7\n");
-        printf("Please enter a command: ");
+        printf("1 | Insert New Record\n2 | Check Name\n");
+        printf("3 | Check Department\n4 | Check Salary\n");
+        printf("5 | Check Employee Number\n6 | Check All In Department\n");
+        printf("7 | Delete\n");
+        printf("Please enter a number to select a command: ");
         fgets(cmdStr, 3, stdin);
         cmd = strtol(cmdStr, NULL, 10);
-        printf("%d\n", cmd);
+        //printf("%d\n", cmd);
         switch (cmd)
         {
             case 1: // Insert
